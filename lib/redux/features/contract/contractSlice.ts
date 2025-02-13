@@ -14,7 +14,7 @@ interface ContractState {
   isFetchingCampaigns: boolean
   isRegisteringVoter: boolean
   isCastingVote: boolean
-  isCreatingCampaign: boolean
+  isCreatingCampaign: boolean  
   error: string | null
   signerAddress: string | null // Add signerAddress to the state
   currentCampaign: {
