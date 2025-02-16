@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <ToastProvider>
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <Providers>
 
       <body

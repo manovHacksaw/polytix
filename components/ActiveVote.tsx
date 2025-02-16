@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import abi from "@/abi"
 import type { Campaign } from "@/types/Campaign"
 
-import VotingOptions from "@/components/VotingOptions"
+import VotingOptions from "@/components/VotingActions"
 import VoteSubmissionButton from "@/components/VoteSubmissionButton"
 
 const contractAddress = "0x5fD6f6d28892F137215Ca8b5d4640E5F2Cc2aAf2"

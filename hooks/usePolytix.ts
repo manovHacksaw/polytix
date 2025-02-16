@@ -10,12 +10,13 @@ import {
     loadContractAndSigner
 } from "@/lib/redux/features/contract/contractSlice";
 import { VotingRestriction, ResultType } from "@/types/VotingTypes";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 function usePolytix() {
     const dispatch = useDispatch<AppDispatch>();
     const {
-        contract,
+        contractAddress, // Get contractAddress from state
+        signerAddress, // Get signerAddress from state
         campaigns,
         proposals,
         paused,
@@ -24,7 +25,6 @@ function usePolytix() {
         isCastingVote,
         isCreatingCampaign,
         error,
-        signerAddress
     } = useSelector((state: RootState) => state.polytix);
 
     useEffect(() => {
@@ -32,47 +32,51 @@ function usePolytix() {
         dispatch(loadContractAndSigner());
     }, [dispatch]);
 
-    const dispatchFetchCampaigns = () => {
+    const dispatchFetchCampaigns = useCallback(() => {
         dispatch(fetchCampaigns());
-    };
+    }, [dispatch]);
 
-    const dispatchCreateCampaign = (
-        description: string,
-        restriction: VotingRestriction,
-        resultType: ResultType,
-        startTime: number,
-        endTime: number,
-        maxVoters: number,
-        proposals: string[]
-    ) => {
-        dispatch(
-            createCampaign({
-                description,
-                restriction,
-                resultType,
-                startTime,
-                endTime,
-                maxVoters,
-                proposals,
-            })
-        );
-    };
+    const dispatchCreateCampaign = useCallback(
+        (
+            description: string,
+            restriction: VotingRestriction,
+            resultType: ResultType,
+            startTime: number,
+            endTime: number,
+            maxVoters: number,
+            proposals: string[]
+        ) => {
+            dispatch(
+                createCampaign({
+                    description,
+                    restriction,
+                    resultType,
+                    startTime,
+                    endTime,
+                    maxVoters,
+                    proposals,
+                })
+            );
+        },
+        [dispatch]
+    );
 
-    const dispatchRegisterToVote = (campaignId: number) => {
+    const dispatchRegisterToVote = useCallback((campaignId: number) => {
         dispatch(registerToVote(campaignId));
-    };
+    }, [dispatch]);
 
-    const dispatchVoteForProposal = (campaignId: number, proposalId: number) => {
+    const dispatchVoteForProposal = useCallback((campaignId: number, proposalId: number) => {
         dispatch(voteForProposal({ campaignId, proposalId }));
-    };
+    }, [dispatch]);
 
-    const dispatchFetchProposals = (campaignId: number) => {
+    const dispatchFetchProposals = useCallback((campaignId: number) => {
         dispatch(fetchProposals(campaignId));
-    };
+    }, [dispatch]);
 
     return {
         // State
-        contract,
+        contractAddress, // Return contractAddress instead of contract
+        signerAddress, // Return signerAddress
         campaigns,
         proposals,
         paused,
@@ -81,7 +85,6 @@ function usePolytix() {
         isCastingVote,
         isCreatingCampaign,
         error,
-        signerAddress,
 
         // Actions
         dispatchFetchCampaigns,

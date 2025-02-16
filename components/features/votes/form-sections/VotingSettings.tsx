@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { Label } from "recharts"
 
 export function VotingSettings({ form }) {
   return (
@@ -32,6 +33,26 @@ export function VotingSettings({ form }) {
             </FormItem>
           )}
         />
+
+         {form.watch("registrationRequired") && (
+                    <FormField
+                    control={form.control}
+                    name="registrationKey"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Registration Key (For restricted voters)</FormLabel>
+                            <FormControl>
+                                <Input
+                                    type="text"
+                                    placeholder="Enter registration key"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                )}
 
         {form.watch("voteType") === "candidate" && (
           <FormField

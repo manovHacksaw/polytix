@@ -7,16 +7,17 @@ import abi from "@/abi"
 import type { RootState } from "../../store"
 
 interface ContractState {
-  contract: ethers.Contract | null
+  // Store only necessary contract data, not the contract object itself
+  contractAddress: string | null; // Store contract address
+  signerAddress: string | null; // Store signer address
   campaigns: Campaign[]
   proposals: { [key: number]: { content: string; voteCount: number }[] }
   paused: boolean
   isFetchingCampaigns: boolean
   isRegisteringVoter: boolean
   isCastingVote: boolean
-  isCreatingCampaign: boolean  
+  isCreatingCampaign: boolean
   error: string | null
-  signerAddress: string | null // Add signerAddress to the state
   currentCampaign: {
     data:
       | (Campaign & {
@@ -33,7 +34,8 @@ interface ContractState {
 }
 
 const initialState: ContractState = {
-  contract: null,
+  contractAddress: null,
+  signerAddress: null,
   campaigns: [],
   proposals: {},
   paused: true,
@@ -42,7 +44,6 @@ const initialState: ContractState = {
   isCastingVote: false,
   isCreatingCampaign: false,
   error: null,
-  signerAddress: null, // Initialize signerAddress
   currentCampaign: {
     data: null,
     isLoading: false,
@@ -50,91 +51,111 @@ const initialState: ContractState = {
   },
 }
 
-// Async thunk to load the contract and signer address
+// Async thunk to load the signer address and contract address
 export const loadContractAndSigner = createAsyncThunk(
-  "polytix/loadContractAndSigner",
-  async (_, { rejectWithValue, dispatch }) => {
-    try {
-      if (typeof window === "undefined" || !window.ethereum) {
-        throw new Error("Ethereum provider not available")
-      }
-      const provider = new ethers.BrowserProvider(window.ethereum)
+    "polytix/loadContractAndSigner",
+    async (_, { rejectWithValue, dispatch }) => {
+        try {
+            if (typeof window === "undefined" || !window.ethereum) {
+                throw new Error("Ethereum provider not available");
+            }
+            const provider = new ethers.BrowserProvider(window.ethereum);
 
-      // Request accounts *before* getting the signer
-      await window.ethereum.request({ method: "eth_requestAccounts" })
+            // Request accounts *before* getting the signer
+            await window.ethereum.request({ method: "eth_requestAccounts" });
 
-      const signer = await provider.getSigner()
-      const signerAddress = await signer.getAddress()
-      const contract = new ethers.Contract(contractAddress, abi, signer)
+            const signer = await provider.getSigner();
+            const signerAddress = await signer.getAddress();
 
-      return { contract, signerAddress }
-    } catch (error: any) {
-      // Cast error to 'any' to access 'message' property
-      console.error("Failed to load contract:", error)
-      return rejectWithValue(error.message || "Failed to load contract.") // Provide a default message
+            // Return only the addresses, not the contract object itself
+            return { contractAddress: contractAddress, signerAddress: signerAddress };
+        } catch (error: any) {
+            console.error("Failed to load contract information:", error);
+            return rejectWithValue(error.message || "Failed to load contract information.");
+        }
     }
-  },
-)
+);
+
+// Helper function to get the contract with the stored state values
+const getContract = (state: ContractState): ethers.Contract => {
+    if (!state.contractAddress || !state.signerAddress) {
+        throw new Error("Contract address or signer address not loaded");
+    }
+
+    if (typeof window === "undefined" || !window.ethereum) {
+        throw new Error("Ethereum provider not available");
+    }
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = new ethers.JsonRpcSigner(state.signerAddress, provider); // Correct usage
+
+    return new ethers.Contract(state.contractAddress, abi, signer);
+};
 
 export const fetchCampaigns = createAsyncThunk("polytix/fetchCampaigns", async (_, { rejectWithValue, getState }) => {
-  try {
-    const { polytix } = getState() as { polytix: ContractState }
-    if (!polytix.contract) throw new Error("Contract not loaded")
+    try {
+        const { polytix } = getState() as { polytix: ContractState };
+        if (!polytix.contractAddress || !polytix.signerAddress) throw new Error("Contract not loaded");
 
-    const campaignCount = await polytix.contract.campaignCount()
-    const campaigns: Campaign[] = []
-    console.log(campaignCount)
+        const contract = getContract(polytix);
+        console.log("CONTRACT LOADED IN FETCH CAMPAIGNS")
 
-    for (let i = 1; i <= campaignCount; i++) {
-      const campaign = await polytix.contract.campaignMetadata(i)
-      console.log("CLG", campaign.description)
-      campaigns.push({
-        id: i,
-        votingType: campaign.votingType,
-        restriction: campaign.restriction,
-        resultType: campaign.resultType,
-        creator: campaign.creator,
-        description: campaign.description,
-        status: campaign.status,
-        startTime: Number(campaign.timeFrame.startTime),
-        endTime: Number(campaign.timeFrame.endTime),
-        maxVoters: Number(campaign.maxVoters),
-      })
+        const campaignCount = await contract.campaignCount()
+        const campaigns: Campaign[] = []
+        console.log(campaignCount)
+
+        for (let i = 1; i <= campaignCount; i++) {
+            const campaign = await contract.campaignMetadata(i)
+            console.log("CLG", campaign.description)
+            campaigns.push({
+                id: i,
+                votingType: campaign.votingType,
+                restriction: campaign.restriction,
+                resultType: campaign.resultType,
+                creator: campaign.creator,
+                description: campaign.description,
+                status: campaign.status,
+                startTime: Number(campaign.timeFrame.startTime),
+                endTime: Number(campaign.timeFrame.endTime),
+                maxVoters: Number(campaign.maxVoters),
+            })
+        }
+        console.log("CAMPAIGNS", campaigns)
+        return campaigns
+    } catch (error: any) {
+        if (error instanceof Error) {
+            return rejectWithValue(error.message)
+        }
+        return rejectWithValue("An unknown error occurred")
     }
-    console.log("CAMPAIGNS", campaigns)
-    return campaigns
-  } catch (error: any) {
-    if (error instanceof Error) {
-      return rejectWithValue(error.message)
-    }
-    return rejectWithValue("An unknown error occurred")
-  }
 })
 
 export const getCampaignById = createAsyncThunk(
   "polytix/getCampaignById",
   async (campaignId: number, { rejectWithValue, getState, dispatch }) => {
     try {
-      const { polytix } = getState() as { polytix: ContractState }
-      if (!polytix.contract) throw new Error("Contract not loaded")
+      const { polytix } = getState() as { polytix: ContractState };
+      if (!polytix.contractAddress || !polytix.signerAddress) throw new Error("Contract not loaded");
+
+        const contract = getContract(polytix);
 
       // Fetch campaign metadata and proposals in parallel
       const [metadata, proposals] = await Promise.all([
-        polytix.contract.campaignMetadata(campaignId),
-        polytix.contract.getProposals(campaignId),
+        contract.campaignMetadata(campaignId),
+        contract.getProposals(campaignId),
       ])
 
       // Get additional campaign data
       const data = {
-        totalVotes: await polytix.contract.campaignData(campaignId).totalVotes(),
-        registeredVoterCount: await polytix.contract.campaignData(campaignId).registeredVoterCount(),
-        isVotingOpen: await polytix.contract.isVotingOpen(campaignId),
+        totalVotes: await contract.campaignData(campaignId).totalVotes(),
+        registeredVoterCount: await contract.campaignData(campaignId).registeredVoterCount(),
+        isVotingOpen: await contract.isVotingOpen(campaignId),
       }
 
       // Check if current user has voted if they're connected
       let hasVoted = false
       if (polytix.signerAddress) {
-        hasVoted = await polytix.contract.campaignData(campaignId).hasVoted(polytix.signerAddress)
+        hasVoted = await contract.campaignData(campaignId).hasVoted(polytix.signerAddress)
       }
 
       // Format the campaign details
@@ -195,10 +216,12 @@ export const createCampaign = createAsyncThunk(
     { rejectWithValue, getState },
   ) => {
     try {
-      const { polytix } = getState() as { polytix: ContractState }
-      if (!polytix.contract) throw new Error("Contract not loaded")
+        const { polytix } = getState() as { polytix: ContractState };
+        if (!polytix.contractAddress || !polytix.signerAddress) throw new Error("Contract not loaded");
 
-      const tx = await polytix.contract.createProposalBasedCampaign(
+        const contract = getContract(polytix);
+
+      const tx = await contract.createProposalBasedCampaign(
         description,
         restriction,
         resultType,
@@ -223,10 +246,12 @@ export const registerToVote = createAsyncThunk(
   "polytix/registerToVote",
   async (campaignId: number, { rejectWithValue, getState }) => {
     try {
-      const { polytix } = getState() as { polytix: ContractState }
-      if (!polytix.contract) throw new Error("Contract not loaded")
+        const { polytix } = getState() as { polytix: ContractState };
+        if (!polytix.contractAddress || !polytix.signerAddress) throw new Error("Contract not loaded");
 
-      const tx = await polytix.contract.registerToVote(campaignId)
+        const contract = getContract(polytix);
+
+      const tx = await contract.registerToVote(campaignId)
       await tx.wait()
 
       return campaignId
@@ -243,10 +268,12 @@ export const voteForProposal = createAsyncThunk(
   "polytix/voteForProposal",
   async ({ campaignId, proposalId }: { campaignId: number; proposalId: number }, { rejectWithValue, getState }) => {
     try {
-      const { polytix } = getState() as { polytix: ContractState }
-      if (!polytix.contract) throw new Error("Contract not loaded")
+        const { polytix } = getState() as { polytix: ContractState };
+        if (!polytix.contractAddress || !polytix.signerAddress) throw new Error("Contract not loaded");
 
-      const tx = await polytix.contract.voteForProposal(campaignId, proposalId)
+        const contract = getContract(polytix);
+
+      const tx = await contract.voteForProposal(campaignId, proposalId)
       await tx.wait()
 
       return { campaignId, proposalId }
@@ -263,10 +290,12 @@ export const fetchProposals = createAsyncThunk(
   "polytix/fetchProposals",
   async (campaignId: number, { rejectWithValue, getState }) => {
     try {
-      const { polytix } = getState() as { polytix: ContractState }
-      if (!polytix.contract) throw new Error("Contract not loaded")
+        const { polytix } = getState() as { polytix: ContractState };
+        if (!polytix.contractAddress || !polytix.signerAddress) throw new Error("Contract not loaded");
 
-      const proposals = await polytix.contract.getProposals(campaignId)
+        const contract = getContract(polytix);
+
+      const proposals = await contract.getProposals(campaignId)
       return { campaignId, proposals }
     } catch (error: any) {
       if (error instanceof Error) {
@@ -283,19 +312,19 @@ const polytixSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Load contract and signer
+      // Load contract and signer (only addresses)
       .addCase(
         loadContractAndSigner.fulfilled,
-        (state, action: PayloadAction<{ contract: ethers.Contract; signerAddress: string }>) => {
-          state.contract = action.payload.contract
-          state.signerAddress = action.payload.signerAddress
-          state.error = null
-        },
+        (state, action: PayloadAction<{ contractAddress: string; signerAddress: string }>) => {
+          state.contractAddress = action.payload.contractAddress;
+          state.signerAddress = action.payload.signerAddress;
+          state.error = null;
+        }
       )
       .addCase(loadContractAndSigner.rejected, (state, action) => {
-        state.contract = null
-        state.signerAddress = null
-        state.error = action.payload as string
+        state.contractAddress = null;
+        state.signerAddress = null;
+        state.error = action.payload as string;
       })
 
       // Campaigns
@@ -388,4 +417,3 @@ const polytixSlice = createSlice({
 export const selectContract = (state: RootState) => state.polytix
 
 export default polytixSlice.reducer
-

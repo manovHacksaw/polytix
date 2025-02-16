@@ -36,6 +36,12 @@ const metaData= {
 						"internalType": "uint256",
 						"name": "endTime",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "enum Polytix.VotingRestriction",
+						"name": "restriction",
+						"type": "uint8"
 					}
 				],
 				"name": "CampaignCreated",
@@ -115,6 +121,25 @@ const metaData= {
 					}
 				],
 				"name": "VoteCast",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "campaignId",
+						"type": "uint256"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "VoterCountUpdated",
+						"type": "uint256"
+					}
+				],
+				"name": "VoterCountUpdated",
 				"type": "event"
 			},
 			{
@@ -228,6 +253,54 @@ const metaData= {
 						"internalType": "uint256",
 						"name": "maxVoters",
 						"type": "uint256"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "registrationKey",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_campaignId",
+						"type": "uint256"
+					}
+				],
+				"name": "canVoterStillParticipate",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "VoteStillAccepted",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_campaignId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "_voter",
+						"type": "address"
+					}
+				],
+				"name": "checkHasVoted",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -266,6 +339,11 @@ const metaData= {
 						"type": "uint256"
 					},
 					{
+						"internalType": "bytes32",
+						"name": "registrationKey",
+						"type": "bytes32"
+					},
+					{
 						"internalType": "string[]",
 						"name": "proposals",
 						"type": "string[]"
@@ -302,6 +380,30 @@ const metaData= {
 						"internalType": "struct Polytix.Proposal[]",
 						"name": "",
 						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_campaignId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "_voter",
+						"type": "address"
+					}
+				],
+				"name": "getRegistrationDetails",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "isReg",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -352,6 +454,11 @@ const metaData= {
 						"internalType": "uint256",
 						"name": "_campaignId",
 						"type": "uint256"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_registrationKey",
+						"type": "bytes32"
 					}
 				],
 				"name": "registerToVote",
@@ -457,15 +564,14 @@ const metaData= {
 			]
 		},
 		"contracts/Voting.sol": {
-			"keccak256": "0xbf0d5d6181114b919fd632521497d9940d1200e515a343acead71212538d68f5",
+			"keccak256": "0xbf66b0a195f14921e865e774cf767eda3df820d990b65520aa7902f10abfa31b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://8347cb6a6e1388defeab5d3c1c11f421a16f24b591ef520fbaf33b27a71602a0",
-				"dweb:/ipfs/QmNwbDPWT3o5wqMCaK4eNja3bLDN7ipunY7shpDm8BWD6P"
+				"bzz-raw://fa9d46b4cc44bff8a64581ef57f0ff5e814e9ef3fc8fcd1a0918b9750abc086a",
+				"dweb:/ipfs/QmNU2kcptq3hDnis6xAwr9UJQ23dCUBE1LcfdPTtu3wVet"
 			]
 		}
 	},
 	"version": 1
 }
-
 export default metaData.output.abi;

@@ -12,4 +12,4 @@ export const POLYGON_ZKEVM_CARDONA_TESTNET = {
   
 export const POLLING_INTERVAL = 12000 
   
-export const contractAddress = "0x62884C5842349d367d7235bBb858172A0758d408";
+export const contractAddress = "0x3638F1F8935bEd587FB6DCD1969c53c5254A8EBe";
