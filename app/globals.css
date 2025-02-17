@@ -54,11 +54,16 @@ body {
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-1: 231 48% 48%;   /* Trustworthy Blue */
+    --chart-2: 200 43% 42%;   /* Secure Slate */
+    --chart-3: 184 56% 38%;   /* Digital Teal */
+    --chart-4: 262 47% 45%;   /* Innovation Purple */
+    --chart-5: 245 40% 40%;   /* Crypto Indigo */
+    --chart-6: 168 45% 35%;   /* Ledger Green */
+    --chart-7: 215 35% 35%;   /* Block Navy */
+    --chart-8: 192 50% 45%;   /* Node Cyan */
+    --chart-9: 238 45% 40%;   /* Hash Blue */
+    --chart-10: 176 40% 38%; /* Chain Sage */
   }
 }
 
